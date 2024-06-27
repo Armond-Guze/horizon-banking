@@ -3,9 +3,14 @@
 import CountUp from "react-countup";
 const AnimatedCounter = ({ amount }: { amount: number }) => {
   return (
-    <div>
-      $<CountUp end={amount} />
-    </div>
+  <div className="w-full">
+    <CountUp
+      decimal=","
+      prefix="$"
+      decimals={2}
+      end={amount} 
+    />
+   </div>
   );
 };
 
