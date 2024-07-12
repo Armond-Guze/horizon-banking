@@ -5,56 +5,66 @@ import { useRouter } from "next/navigation";
 import { createLinkToken, exchangePublicToken } from "@/lib/actions/user.actions";
 
 const PlaidLink = ({ user, variant }: PlaidLinkProps) => {
-
-    const router = useRouter()
+    const router = useRouter();
     const [token, setToken] = useState('');
 
     useEffect(() => {
-        const getLinkToken = async () => {
-            const data = await createLinkToken(user)
-
-            setToken(data?.LinkToken)
-        } 
-    }, [user]);
+      const getLinkToken = async () => {
+          try {
+              const linkToken = await createLinkToken(user);
+              console.log('Link Token:', linkToken);
+              setToken(linkToken);
+          } catch (error) {
+              console.error('Error fetching link token:', error);
+          }
+      };
+  
+      getLinkToken();
+  }, [user]);
 
     const onSuccess = useCallback<PlaidLinkOnSuccess>(async (public_token: string) => {
-        await exchangePublicToken({
-            publicToken: public_token,
-            user,
-        })
+        try {
+            await exchangePublicToken({
+                publicToken: public_token,
+                user,
+            });
+            router.push('/');
+        } catch (error) {
+            console.error('Error exchanging public token:', error); // Add this line
+        }
+    }, [user, router]);
 
-        router.push('/')
-    }, [user])
-    
     const config: PlaidLinkOptions = {
         token,
-        onSuccess
-    }
+        onSuccess,
+    };
 
-    const { open, ready } = usePlaidLink(config)
 
-  return (
-    <>
-      {variant === "primary" ? (
-        <Button
-        onClick={() => open()}
-        disabled={!ready}
-        className="plaidlink-primary">
-            Connect bank
-        </Button>
+    console.log('Plaid Link Config:', config);
+    const { open, ready } = usePlaidLink(config);
+    console.log('Plaid Link ready:', ready); // Add this line
 
-      ) : variant === "ghost" ? (
-        <Button>
-            Connect bank
-        </Button>
-
-      ) : (
-        <Button>
-            Connect bank
-        </Button>
-      )}
-    </>
-  );
+    return (
+        <>
+            {variant === "primary" ? (
+                <Button
+                    onClick={() => open()}
+                    disabled={!ready}
+                    className="plaidlink-primary"
+                >
+                    Connect bank
+                </Button>
+            ) : variant === "ghost" ? (
+                <Button>
+                    Connect bank
+                </Button>
+            ) : (
+                <Button>
+                    Connect bank
+                </Button>
+            )}
+        </>
+    );
 };
 
 export default PlaidLink;

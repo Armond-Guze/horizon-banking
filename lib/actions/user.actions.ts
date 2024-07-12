@@ -106,27 +106,32 @@ export async function getLoggedInUser() {
         return null;
     }
   }
-  
+
   export const createLinkToken = async (user: User) => {
     try {
-        const tokenParams = {
-            user: {
-                client_user_id: user.$id
-            },
-            client_name: `${user.firstName} ${user.lastName}`,
-            products: ['auth'] as Products[],
-            language: 'en',
-            country_codes: ['US'] as CountryCode[],
-        }
-        const response = await plaidClient.linkTokenCreate(tokenParams);
-
-
-        return parseStringify({ linkToken: response.data.link_token })
-
-    } catch (error) {
-        console.log(error)
-    }
-  }
+      const tokenParams = {
+        user: {
+          client_user_id: user.$id
+        },
+        client_name: `${user.firstName} ${user.lastName}`,
+        products: ['auth'] as Products[],
+        language: 'en',
+        country_codes: ['US'] as CountryCode[],
+      }
+  
+          const response = await plaidClient.linkTokenCreate(tokenParams);
+          console.log('Plaid API response:', response); // Add this line
+  
+          const linkToken = response.data.link_token;
+          console.log('Link Token:', linkToken); // Add this line
+  
+          return linkToken; // Return the plain link token
+  
+      } catch (error) {
+          console.error('Error creating link token:', error);
+          throw new Error('Failed to create link token');
+      }
+  };
 
   export const createBankAccount = async ({
     userId,
