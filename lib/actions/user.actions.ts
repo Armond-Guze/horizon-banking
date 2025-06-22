@@ -120,11 +120,8 @@ export async function getLoggedInUser() {
       }
   
           const response = await plaidClient.linkTokenCreate(tokenParams);
-          console.log('Plaid API response:', response); // Add this line
-  
           const linkToken = response.data.link_token;
-          console.log('Link Token:', linkToken); // Add this line
-  
+
           return linkToken; // Return the plain link token
   
       } catch (error) {
