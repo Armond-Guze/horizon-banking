@@ -29,7 +29,7 @@ const Home = async () => {
       <RightSidebar
         user={loggedIn}
         transactions={[]}
-        banks={[]}
+
       />
     </section>
   );

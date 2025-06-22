@@ -12,7 +12,6 @@ const PlaidLink = ({ user, variant }: PlaidLinkProps) => {
       const getLinkToken = async () => {
           try {
               const linkToken = await createLinkToken(user);
-              console.log('Link Token:', linkToken);
               setToken(linkToken);
           } catch (error) {
               console.error('Error fetching link token:', error);
@@ -30,7 +29,7 @@ const PlaidLink = ({ user, variant }: PlaidLinkProps) => {
             });
             router.push('/');
         } catch (error) {
-            console.error('Error exchanging public token:', error); // Add this line
+            console.error('Error exchanging public token:', error);
         }
     }, [user, router]);
 
@@ -40,9 +39,7 @@ const PlaidLink = ({ user, variant }: PlaidLinkProps) => {
     };
 
 
-    console.log('Plaid Link Config:', config);
     const { open, ready } = usePlaidLink(config);
-    console.log('Plaid Link ready:', ready); // Add this line
 
     return (
         <>
