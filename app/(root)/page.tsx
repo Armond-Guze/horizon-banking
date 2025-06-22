@@ -29,46 +29,7 @@ const Home = async () => {
       <RightSidebar
         user={loggedIn}
         transactions={[]}
-        banks={[
-          {
-            $id: "1",
-            accountId: "1",
-            bankId: "1",
-            accessToken: "",
-            fundingSourceUrl: "",
-            userId: "1",
-            sharableId: "1",
-            id: "1",
-            availableBalance: 0,
-            currentBalance: 123.5,
-            officialName: "",
-            mask: "",
-            institutionId: "",
-            name: "Bank 1",
-            type: "",
-            subtype: "",
-            appwriteItemId: "",
-          },
-          {
-            $id: "2",
-            accountId: "2",
-            bankId: "2",
-            accessToken: "",
-            fundingSourceUrl: "",
-            userId: "1",
-            sharableId: "2",
-            id: "2",
-            availableBalance: 0,
-            currentBalance: 500,
-            officialName: "",
-            mask: "",
-            institutionId: "",
-            name: "Bank 2",
-            type: "",
-            subtype: "",
-            appwriteItemId: "",
-          },
-        ]}
+
       />
     </section>
   );
