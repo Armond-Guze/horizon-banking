@@ -1,7 +1,9 @@
 [build]
+  # Netlify will change into this directory before running build commands
   base = "jsm_banking"
   command = "npm run build"
-  publish = "jsm_banking/.next"
+  # Because base is already jsm_banking, publish should be the generated .next folder directly
+  publish = ".next"
 
 [build.environment]
   NODE_VERSION = "18"
