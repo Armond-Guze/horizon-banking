@@ -22,7 +22,7 @@ import CustomInput from "./CustomInput";
 import { authFormSchema } from "@/lib/utils";
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { signUp, signIn, getLoggedInUser } from "@/lib/actions/user.actions";
+// Server actions are invoked via API routes to keep this a client component without importing 'use server' files
 import PlaidLink from "./PlaidLink";
 
 const AuthForm = ({ type }: { type: string }) => {
@@ -64,7 +64,16 @@ const AuthForm = ({ type }: { type: string }) => {
         }
   
         try {
-          const newUser = await signUp(userData);
+          const res = await fetch('/api/auth/sign-up', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify(userData)
+          });
+          const json = await res.json();
+          if (!json.ok) {
+            throw new Error(json.error || 'Sign up failed');
+          }
+          const newUser = json.user;
           if(!newUser || !newUser.$id){
             setError('Sign up failed (no user returned). Please retry.');
             return;
@@ -89,11 +98,13 @@ const AuthForm = ({ type }: { type: string }) => {
       
       if (type === 'sign-in') {
         try {
-        const response = await signIn({
-          email: data.email,
-          password: data.password,
-        })
-          if(!response){
+          const res = await fetch('/api/auth/sign-in', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ email: data.email, password: data.password })
+          });
+          const json = await res.json();
+          if(!json.ok){
             setError('Invalid email or password.');
             return;
           }
