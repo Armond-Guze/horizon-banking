@@ -148,6 +148,12 @@ export const signUp = async ({ password, ...userData }: SignUpParams) => {
     if (/configuration error/i.test(error?.message)) {
       throw new Error(error.message); // already user friendly
     }
+    if (/Invalid credentials|Project ID is required|API key|not authorized/i.test(error?.message)) {
+      throw new Error('Appwrite credentials invalid or insufficient permissions. Verify NEXT_APPWRITE_KEY and project ID.');
+    }
+    if (code === 401 || code === 403) {
+      throw new Error('Appwrite key unauthorized for required actions (account/database). Update key permissions.');
+    }
     if (/network|fetch|ECONN|ENOTFOUND/i.test(error?.message)) {
       throw new Error('Network error communicating with identity service. Please retry shortly.');
     }
