@@ -68,6 +68,18 @@ export const signUp = async ({ password, ...userData }: SignUpParams) => {
   const { email, firstName, lastName } = userData;
   let stage: string = 'init';
   try {
+    // Validate required environment configuration up-front so we fail fast with a clear message
+    const requiredEnv = [
+      'NEXT_PUBLIC_APPWRITE_ENDPOINT',
+      'NEXT_PUBLIC_APPWRITE_PROJECT',
+      'NEXT_APPWRITE_KEY',
+      'APPWRITE_DATABASE_ID',
+      'APPWRITE_USER_COLLECTION_ID'
+    ];
+    const missing = requiredEnv.filter(k => !process.env[k]);
+    if (missing.length) {
+      throw new Error(`Configuration error: missing environment variables: ${missing.join(', ')}`);
+    }
     const { account, database } = await createAdminClient();
     stage = 'create-appwrite-account';
     const newUserAccount = await account.create(
@@ -79,12 +91,24 @@ export const signUp = async ({ password, ...userData }: SignUpParams) => {
     if (!newUserAccount) throw new Error('No account returned');
 
     stage = 'create-dwolla-customer';
-    const dwollaCustomerUrl = await createDwollaCustomer({
-      ...userData,
-      type: 'personal'
-    });
-    if (!dwollaCustomerUrl) throw new Error('Dwolla customer URL missing');
-    const dwollaCustomerId = extractCustomerIdFromUrl(dwollaCustomerUrl);
+    let dwollaCustomerId: string | null = null;
+    let dwollaCustomerUrl: string | null = null;
+    try {
+      dwollaCustomerUrl = await createDwollaCustomer({
+        ...userData,
+        type: 'personal'
+      });
+      if (!dwollaCustomerUrl) throw new Error('Dwolla customer URL missing');
+      dwollaCustomerId = extractCustomerIdFromUrl(dwollaCustomerUrl);
+    } catch (dwErr: any) {
+      // Allow signup to proceed without Dwolla so user can retry linking later
+      console.error('[signUp] Dwolla customer creation failed – proceeding without Dwolla', {
+        stage,
+        error: dwErr?.message
+      });
+      dwollaCustomerId = null;
+      dwollaCustomerUrl = null;
+    }
 
     stage = 'persist-user-document';
     const newUser = await database.createDocument(
@@ -94,6 +118,7 @@ export const signUp = async ({ password, ...userData }: SignUpParams) => {
       {
         ...userData,
         userId: newUserAccount.$id,
+        // May be null if Dwolla failed; UI can prompt to finish setup later
         dwollaCustomerId,
         dwollaCustomerUrl
       }
@@ -119,8 +144,17 @@ export const signUp = async ({ password, ...userData }: SignUpParams) => {
     if (!email || !firstName || !lastName) {
       throw new Error('Missing required fields: first name, last name, or email.');
     }
+    // Surface clearer categorized messages
+    if (/configuration error/i.test(error?.message)) {
+      throw new Error(error.message); // already user friendly
+    }
+    if (/network|fetch|ECONN|ENOTFOUND/i.test(error?.message)) {
+      throw new Error('Network error communicating with identity service. Please retry shortly.');
+    }
+    if (/dwolla/i.test(error?.message)) {
+      throw new Error('Sign up created your account but bank profile setup failed. You can retry linking after signing in.');
+    }
     const base = error?.message || 'Unknown signup failure';
-    // Provide stage context for debugging (but hide raw internal details in production)
     const stageInfo = process.env.NODE_ENV === 'production' ? '' : ` (stage: ${stage})`;
     throw new Error(`Signup failed: ${base}${stageInfo}`);
   }
