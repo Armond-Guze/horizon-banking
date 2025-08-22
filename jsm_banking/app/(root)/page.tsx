@@ -4,6 +4,9 @@ import TotalBalanceBox from "@/components/TotalBalanceBox";
 import { getAccount, getAccounts } from "@/lib/actions/bank.actions";
 import { getLoggedInUser } from "@/lib/actions/user.actions";
 
+// Avoid hitting external services during build / when secrets are unavailable
+const isBuildShell = !process.env.APPWRITE_DATABASE_ID || process.env.BUILD_TIME === '1';
+
 // Define props locally since global declaration file isn't a module
 type HomePageProps = {
   searchParams: { [key: string]: string | string[] | undefined };
@@ -11,6 +14,23 @@ type HomePageProps = {
 
 const Home = async ({ searchParams: { id } }: HomePageProps) => {
   try {
+    if (isBuildShell) {
+      return (
+        <section className="home">
+          <div className="home-content p-6 text-sm text-gray-500">
+            <HeaderBox
+              type="greeting"
+              title="Welcome"
+              user="Guest"
+              subtext="Runtime data (accounts & balances) loads after deployment."
+            />
+            <div className="mt-6 rounded-xl border border-gray-200 p-6">
+              Build shell – no secrets loaded. Set environment variables in Netlify for live data.
+            </div>
+          </div>
+        </section>
+      );
+    }
     const loggedIn = await getLoggedInUser();
     console.log('Logged In User:', loggedIn);
 
