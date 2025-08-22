@@ -54,7 +54,7 @@ const Home = async ({ searchParams: { id } }: HomePageProps) => {
               />
             ) : (
               <div className="rounded-xl border border-gray-200 p-6 text-gray-600 text-14">
-                No bank accounts linked yet. Click "Add Bank" in the sidebar after linking via Plaid.
+                No bank accounts linked yet. Click &quot;Add Bank&quot; in the sidebar after linking via Plaid.
               </div>
             )}
           </header>

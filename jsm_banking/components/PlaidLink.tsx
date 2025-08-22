@@ -41,7 +41,7 @@ const PlaidLink = ({ user, variant }: PlaidLinkProps) => {
           }
       };
             if (user?.$id) getLinkToken();
-  }, [user?.$id]);
+  }, [user?.$id, user]);
 
         const loadSandboxInstitution = async () => {
             setSandboxLoading(true);

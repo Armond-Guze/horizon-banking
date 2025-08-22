@@ -1,15 +1,12 @@
 [build]
   base = "jsm_banking"
-  # Disable ESLint during CI build (handled locally) and pass BUILD_TIME flag
-  command = "NEXT_DISABLE_ESLINT=1 BUILD_TIME=1 npm run build"
+  # Standard build; lint will run now that duplicate configs are removed
+  command = "npm run build"
   publish = ".next"
 
 [build.environment]
   NODE_VERSION = "18.20.0"
   NPM_FLAGS = "--no-audit --no-fund"
-  # Also expose flag the layout checks
-  BUILD_TIME = "1"
-  NEXT_DISABLE_ESLINT = "1"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
