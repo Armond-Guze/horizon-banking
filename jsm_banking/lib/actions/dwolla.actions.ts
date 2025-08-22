@@ -9,33 +9,42 @@ function parseDwollaError(err: any) {
   return { message, code, raw: body };
 }
 
+// Resolve environment without throwing at import time (prevents build failures when
+// env vars are absent in static build context). Defaults to sandbox and warns.
 const getEnvironment = (): "production" | "sandbox" => {
-  const environment = process.env.DWOLLA_ENV as string;
-
-  switch (environment) {
-    case "sandbox":
-      return "sandbox";
-    case "production":
-      return "production";
-    default:
-      throw new Error(
-        "Dwolla environment should either be set to `sandbox` or `production`"
-      );
+  const val = (process.env.DWOLLA_ENV || '').toLowerCase();
+  if (val === 'production') return 'production';
+  if (val !== 'sandbox') {
+    if (process.env.BUILD_TIME === '1') {
+      console.warn('[dwolla] DWOLLA_ENV missing; defaulting to sandbox for build shell.');
+    } else {
+      console.warn('[dwolla] Invalid DWOLLA_ENV value; defaulting to sandbox. Set DWOLLA_ENV="sandbox" or "production".');
+    }
   }
+  return 'sandbox';
 };
 
-const dwollaClient = new Client({
-  environment: getEnvironment(),
-  key: process.env.DWOLLA_KEY as string,
-  secret: process.env.DWOLLA_SECRET as string,
-});
+let _dwollaClient: Client | null = null;
+function getDwollaClient(): Client {
+  if (_dwollaClient) return _dwollaClient;
+  const key = process.env.DWOLLA_KEY;
+  const secret = process.env.DWOLLA_SECRET;
+  if (!key || !secret) {
+    // Provide a dummy client that will throw only when actually used
+    const missing = ['DWOLLA_KEY','DWOLLA_SECRET'].filter(n=>!(process.env as any)[n]).join(', ');
+    throw new Error(`[dwolla] Missing credentials (${missing}). Add them as environment variables.`);
+  }
+  _dwollaClient = new Client({ environment: getEnvironment(), key, secret });
+  return _dwollaClient;
+}
 
 // Create a Dwolla Funding Source using a Plaid Processor Token
 export const createFundingSource = async (
   options: CreateFundingSourceOptions
 ) => {
   try {
-    return await dwollaClient
+  const client = getDwollaClient();
+  return await client
       .post(`customers/${options.customerId}/funding-sources`, {
         name: options.fundingSourceName,
         plaidToken: options.plaidToken,
@@ -50,7 +59,8 @@ export const createFundingSource = async (
 
 export const createOnDemandAuthorization = async () => {
   try {
-    const onDemandAuthorization = await dwollaClient.post(
+  const client = getDwollaClient();
+  const onDemandAuthorization = await client.post(
       "on-demand-authorizations"
     );
     const authLink = onDemandAuthorization.body._links;
@@ -66,7 +76,8 @@ export const createDwollaCustomer = async (
   newCustomer: NewDwollaCustomerParams
 ) => {
   try {
-    return await dwollaClient
+  const client = getDwollaClient();
+  return await client
       .post("customers", newCustomer)
       .then((res) => res.headers.get("location"));
   } catch (err) {
@@ -89,7 +100,8 @@ export const createTransfer = async ({
       },
       amount: { currency: "USD", value: amount },
     };
-    return await dwollaClient
+  const client = getDwollaClient();
+  return await client
       .post("transfers", requestBody)
       .then((res) => res.headers.get("location"));
   } catch (err) {
